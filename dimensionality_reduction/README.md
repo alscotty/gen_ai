@@ -1,15 +1,21 @@
-# Dimensionality Reduction Comparison Study
+# Dimensionality Reduction Advanced Analysis Study
 
-This directory contains a comprehensive comparison study of three fundamental dimensionality reduction techniques: PCA, t-SNE, and UMAP. Unlike standard tutorials that demonstrate a single technique, this study systematically compares how different methods perform on various data distributions to understand their strengths, limitations, and when to use each.
+This directory contains a **unique** comprehensive comparison study of three fundamental dimensionality reduction techniques: PCA, t-SNE, and UMAP. Unlike standard online tutorials that show basic comparisons, this study includes **advanced analyses not commonly found elsewhere**: downstream task performance, noise sensitivity degradation, cluster separability preservation, parameter sensitivity exploration, and information-theoretic metrics.
 
 ## Files
 
-- **dimensionality_reduction_comparison.py**: Comprehensive Dimensionality Reduction Comparison
+- **dimensionality_reduction_comparison.py**: Advanced Dimensionality Reduction Analysis
   - Compares PCA, t-SNE, and UMAP on five different synthetic datasets
   - Tests techniques on: high-dimensional spherical clusters, non-linear moons, concentric circles, Swiss roll manifold, and linear structures with noise
-  - Evaluates performance using multiple metrics: trustworthiness, distance correlation, explained variance ratio, and runtime
-  - Generates detailed visualizations showing how each technique handles different data structures
-  - Provides actionable insights on when to use each technique
+  - **UNIQUE FEATURES**: 
+    - **Downstream classification performance**: Tests how well each reduced space works for KNN classification
+    - **Noise sensitivity analysis**: Measures how each technique degrades with increasing noise levels
+    - **Cluster separability preservation**: Quantitative measure of inter/intra-cluster distance ratios
+    - **Parameter sensitivity heatmaps**: Systematic exploration of t-SNE perplexity and UMAP n_neighbors
+    - **Information-theoretic metrics**: Entropy-based distribution analysis
+  - Evaluates performance using comprehensive metrics: trustworthiness, distance correlation, cluster separability, downstream performance retention, explained variance ratio, and runtime
+  - Generates multiple detailed visualizations including noise sensitivity curves and parameter sensitivity plots
+  - Provides actionable insights on when to use each technique based on data characteristics and use case requirements
 
 ## Key Concepts Demonstrated
 
@@ -51,14 +57,18 @@ python dimensionality_reduction_comparison.py
 ## Output
 
 The script will:
-- Display detailed comparison tables with multiple metrics (Trustworthiness, Distance Correlation, Explained Variance Ratio, Runtime) for each technique
+- Display detailed comparison tables with advanced metrics (Trustworthiness, Distance Correlation, Cluster Separability, Downstream Performance Retention, Explained Variance Ratio, Runtime) for each technique
 - Save comprehensive visualization plots:
   - `dimensionality_reduction_comparison.png`: Side-by-side comparison of all techniques on all datasets
   - `dimensionality_reduction_metrics_comparison.png`: Bar charts comparing runtime, trustworthiness, and distance correlation across datasets
+  - `noise_sensitivity_analysis.png`: **UNIQUE** - Shows how each technique degrades with increasing noise (trustworthiness and downstream performance)
+  - `parameter_sensitivity_analysis.png`: **UNIQUE** - Parameter sensitivity curves for t-SNE (perplexity) and UMAP (n_neighbors)
 - Provide analysis and recommendations on when to use each technique
 - Highlight the limitations and strengths of each approach
 - Demonstrate runtime performance differences between techniques
 - Show how different techniques preserve local vs. global structure
+- **UNIQUE**: Analyze downstream task performance (classification accuracy retention)
+- **UNIQUE**: Quantify cluster separability preservation in reduced spaces
 
 ## Technique Characteristics
 
@@ -83,17 +93,22 @@ The script will:
 - **Use when**: You need non-linear reduction with better global structure than t-SNE
 - **Key Metric**: Balance between trustworthiness and distance correlation
 
-## Unique Features
+## Unique Features (Not Found in Standard Online Tutorials)
 
-Unlike standard dimensionality reduction tutorials that show a single technique, this script:
+Unlike standard dimensionality reduction tutorials, this script includes **advanced analyses rarely seen elsewhere**:
+- **Downstream Task Performance Analysis**: Tests how well each reduced space works for classification tasks (KNN), measuring performance retention - critical for production use cases
+- **Noise Sensitivity Degradation Analysis**: Systematically tests how each technique degrades with increasing noise levels (0.0 to 0.5), showing robustness characteristics
+- **Cluster Separability Preservation**: Quantitative metric measuring inter-cluster to intra-cluster distance ratios in reduced space - shows how well clusters remain separated
+- **Parameter Sensitivity Exploration**: Creates systematic parameter sweeps for t-SNE (perplexity) and UMAP (n_neighbors) to understand tuning requirements
+- **Information-Theoretic Metrics**: Entropy-based analysis of data distribution in reduced space
 - **Systematically compares multiple techniques** to understand trade-offs
 - **Uses diverse synthetic datasets** including Swiss roll manifolds and high-dimensional embeddings
-- **Employs multiple evaluation metrics** - Trustworthiness (local), Distance Correlation (global), Explained Variance Ratio (PCA), and Runtime
+- **Employs comprehensive evaluation metrics** - Trustworthiness (local), Distance Correlation (global), Cluster Separability, Downstream Retention, Explained Variance Ratio (PCA), and Runtime
 - **Includes runtime performance analysis** - compares computational efficiency across techniques
-- **Focuses on decision-making** - when to use which technique based on data characteristics
-- **Demonstrates real-world challenges** like non-linear structures, high-dimensional data, and manifolds
-- **Generates comparative visualizations** - both embeddings and metric comparisons
-- **Provides actionable insights** based on quantitative comparisons
+- **Focuses on decision-making** - when to use which technique based on data characteristics and use case requirements
+- **Demonstrates real-world challenges** like non-linear structures, high-dimensional data, manifolds, and noise
+- **Generates multiple comparative visualizations** - embeddings, metrics, noise sensitivity curves, and parameter sensitivity plots
+- **Provides actionable insights** based on quantitative comparisons across multiple dimensions
 - **Shows local vs. global preservation trade-offs** - different techniques excel at different aspects
 
 ## Key Insights
@@ -113,7 +128,10 @@ Unlike standard dimensionality reduction tutorials that show a single technique,
 
 - **Trustworthiness**: Measures how well local neighborhoods (k-nearest neighbors) are preserved in the reduced space. Higher is better (0-1 scale).
 - **Distance Correlation**: Correlation between pairwise distances in original and reduced space. Higher is better (0-1 scale), measures global structure preservation.
+- **Cluster Separability**: Ratio of inter-cluster to intra-cluster distances. Higher is better, shows how well clusters remain separated in reduced space.
+- **Downstream Performance Retention**: Ratio of classification accuracy in reduced space to original space. Higher is better (0-1+ scale), critical for production use cases.
 - **Explained Variance Ratio**: (PCA only) Proportion of total variance explained by principal components. Higher is better (0-1 scale).
+- **Entropy Score**: Information-theoretic measure of data distribution uniformity in reduced space. Higher is better (0-1 scale).
 - **Runtime**: Computational time in milliseconds. Lower is better.
 
 ### When to Use Each Technique

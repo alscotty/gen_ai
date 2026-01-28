@@ -448,15 +448,106 @@ def visualize_results(datasets, all_results):
     
     return fig
 
+def noise_sensitivity_analysis(X_base, y_true, method_name='PCA', noise_levels=[0.0, 0.1, 0.2, 0.3, 0.5]):
+    """Analyze how each technique degrades with increasing noise - UNIQUE ANALYSIS."""
+    scaler = StandardScaler()
+    X_base_scaled = scaler.fit_transform(X_base)
+    
+    results = []
+    for noise_level in noise_levels:
+        # Add noise
+        X_noisy = X_base_scaled + np.random.randn(*X_base_scaled.shape) * noise_level
+        
+        # Apply dimensionality reduction
+        if method_name == 'PCA':
+            reducer = PCA(n_components=2, random_state=42)
+            X_reduced = reducer.fit_transform(X_noisy)
+            evr = reducer.explained_variance_ratio_.sum()
+        elif method_name == 't-SNE':
+            reducer = TSNE(n_components=2, perplexity=30, random_state=42, 
+                          init='pca', n_iter=500, verbose=0)
+            X_reduced = reducer.fit_transform(X_noisy)
+            evr = 0.0
+        elif method_name == 'UMAP' and UMAP_AVAILABLE:
+            reducer = umap.UMAP(n_components=2, n_neighbors=15, min_dist=0.1, 
+                               random_state=42, verbose=False)
+            X_reduced = reducer.fit_transform(X_noisy)
+            evr = 0.0
+        else:
+            continue
+        
+        # Compute metrics
+        metrics = compute_preservation_metrics(X_base_scaled, X_reduced, y_true)
+        downstream = compute_downstream_performance(X_base_scaled, X_reduced, y_true)
+        
+        results.append({
+            'noise_level': noise_level,
+            'trustworthiness': metrics['trustworthiness'],
+            'distance_correlation': metrics['distance_correlation'],
+            'cluster_separability': metrics.get('cluster_separability', 0.0),
+            'performance_retention': downstream['performance_retention'],
+            'evr': evr
+        })
+    
+    return results
+
+def parameter_sensitivity_heatmap(X_scaled, y_true, method_name='t-SNE'):
+    """Create parameter sensitivity heatmap - UNIQUE ANALYSIS."""
+    if method_name == 't-SNE':
+        perplexity_values = [5, 10, 15, 20, 30, 40, 50]
+        param_name = 'perplexity'
+        results = []
+        
+        for perp in perplexity_values:
+            try:
+                reducer = TSNE(n_components=2, perplexity=perp, random_state=42, 
+                              init='pca', n_iter=500, verbose=0)
+                X_reduced = reducer.fit_transform(X_scaled)
+                metrics = compute_preservation_metrics(X_scaled, X_reduced, y_true)
+                results.append({
+                    'param_value': perp,
+                    'trustworthiness': metrics['trustworthiness'],
+                    'distance_correlation': metrics['distance_correlation'],
+                    'cluster_separability': metrics.get('cluster_separability', 0.0)
+                })
+            except:
+                continue
+        
+        return results, param_name, perplexity_values
+    
+    elif method_name == 'UMAP' and UMAP_AVAILABLE:
+        n_neighbors_values = [5, 10, 15, 20, 30, 50]
+        param_name = 'n_neighbors'
+        results = []
+        
+        for n_neigh in n_neighbors_values:
+            try:
+                reducer = umap.UMAP(n_components=2, n_neighbors=n_neigh, min_dist=0.1, 
+                                   random_state=42, verbose=False)
+                X_reduced = reducer.fit_transform(X_scaled)
+                metrics = compute_preservation_metrics(X_scaled, X_reduced, y_true)
+                results.append({
+                    'param_value': n_neigh,
+                    'trustworthiness': metrics['trustworthiness'],
+                    'distance_correlation': metrics['distance_correlation'],
+                    'cluster_separability': metrics.get('cluster_separability', 0.0)
+                })
+            except:
+                continue
+        
+        return results, param_name, n_neighbors_values
+    
+    return None, None, None
+
 def print_comparison_table(all_results):
-    """Print a comprehensive comparison table."""
+    """Print a comprehensive comparison table with advanced metrics."""
     print("\n" + "=" * 70)
-    print("COMPREHENSIVE COMPARISON TABLE")
+    print("COMPREHENSIVE COMPARISON TABLE (with Advanced Metrics)")
     print("=" * 70)
     
     methods = ['PCA', 't-SNE'] + (['UMAP'] if UMAP_AVAILABLE else [])
-    print(f"\n{'Dataset':<20} {'Method':<10} {'Runtime(ms)':<12} {'Trustworthiness':<15} "
-          f"{'Dist Corr':<12} {'EV Ratio':<10} {'Notes':<20}")
+    print(f"\n{'Dataset':<18} {'Method':<8} {'Runtime':<10} {'Trust':<8} {'DistCorr':<10} "
+          f"{'Separability':<12} {'Downstream':<12} {'EV Ratio':<10}")
     print("-" * 110)
     
     for dataset_name, results in all_results.items():
@@ -464,19 +555,17 @@ def print_comparison_table(all_results):
             method_results = results[method_name]
             metrics = method_results['metrics']
             runtime_ms = method_results.get('runtime', 0) * 1000
+            downstream = method_results.get('downstream', {})
             
             ev_ratio = method_results.get('explained_variance_ratio', 0.0)
             ev_str = f"{ev_ratio:.3f}" if ev_ratio > 0 else "N/A"
             
-            notes = ""
-            if method_name == 'PCA' and ev_ratio > 0.8:
-                notes = "High variance explained"
-            elif metrics['trustworthiness'] > 0.7:
-                notes = "Good local preservation"
+            separability = metrics.get('cluster_separability', 0.0)
+            retention = downstream.get('performance_retention', 0.0)
             
-            print(f"{dataset_name[:18]:<20} {method_name:<10} {runtime_ms:<12.2f} "
-                  f"{metrics['trustworthiness']:<15.3f} {metrics['distance_correlation']:<12.3f} "
-                  f"{ev_str:<10} {notes:<20}")
+            print(f"{dataset_name[:16]:<18} {method_name:<8} {runtime_ms:<10.1f} "
+                  f"{metrics['trustworthiness']:<8.3f} {metrics['distance_correlation']:<10.3f} "
+                  f"{separability:<12.3f} {retention:<12.3f} {ev_str:<10}")
         print("-" * 110)
 
 def analyze_results(all_results):
@@ -529,10 +618,13 @@ def analyze_results(all_results):
         for method_name in ['PCA', 't-SNE'] + (['UMAP'] if UMAP_AVAILABLE else []):
             method_results = results[method_name]
             metrics = method_results['metrics']
+            downstream = method_results.get('downstream', {})
             print(f"   • {method_name}:")
             print(f"     - Runtime: {method_results.get('runtime', 0)*1000:.2f} ms")
             print(f"     - Trustworthiness: {metrics['trustworthiness']:.3f}")
             print(f"     - Distance Correlation: {metrics['distance_correlation']:.3f}")
+            print(f"     - Cluster Separability: {metrics.get('cluster_separability', 0.0):.3f}")
+            print(f"     - Downstream Performance Retention: {downstream.get('performance_retention', 0.0):.3f}")
             if method_name == 'PCA':
                 evr = method_results.get('explained_variance_ratio', 0)
                 print(f"     - Explained Variance Ratio: {evr:.3f}")
@@ -555,7 +647,7 @@ def main():
     
     for name, (X, y_true, description) in datasets.items():
         print(f"\n📦 Processing {name} dataset ({description})...")
-        results, X_scaled = apply_dimensionality_reduction(X, name, n_components=2)
+        results, X_scaled = apply_dimensionality_reduction(X, name, y_true, n_components=2)
         results['X_scaled'] = X_scaled
         all_results[name] = results
     
@@ -570,6 +662,96 @@ def main():
     
     # Analyze and provide insights
     analyze_results(all_results)
+    
+    # UNIQUE ANALYSES: Noise sensitivity and parameter sensitivity
+    print("\n" + "=" * 70)
+    print("UNIQUE ADVANCED ANALYSES")
+    print("=" * 70)
+    
+    # Noise sensitivity analysis on one representative dataset
+    print("\n🔬 Noise Sensitivity Analysis (on high_dim_spherical dataset)...")
+    test_dataset = datasets['high_dim_spherical']
+    X_test, y_test = test_dataset[0], test_dataset[1]
+    
+    noise_results = {}
+    for method in ['PCA', 't-SNE'] + (['UMAP'] if UMAP_AVAILABLE else []):
+        print(f"   Analyzing {method} noise sensitivity...")
+        noise_results[method] = noise_sensitivity_analysis(X_test, y_test, method)
+    
+    # Visualize noise sensitivity
+    fig3, axes3 = plt.subplots(1, 2, figsize=(12, 4))
+    noise_levels = [0.0, 0.1, 0.2, 0.3, 0.5]
+    
+    for method in ['PCA', 't-SNE'] + (['UMAP'] if UMAP_AVAILABLE else []):
+        if method in noise_results:
+            trust_vals = [r['trustworthiness'] for r in noise_results[method]]
+            retention_vals = [r['performance_retention'] for r in noise_results[method]]
+            axes3[0].plot(noise_levels[:len(trust_vals)], trust_vals, marker='o', label=method)
+            axes3[1].plot(noise_levels[:len(retention_vals)], retention_vals, marker='o', label=method)
+    
+    axes3[0].set_xlabel('Noise Level')
+    axes3[0].set_ylabel('Trustworthiness')
+    axes3[0].set_title('Noise Sensitivity: Local Structure Preservation')
+    axes3[0].legend()
+    axes3[0].grid(True, alpha=0.3)
+    
+    axes3[1].set_xlabel('Noise Level')
+    axes3[1].set_ylabel('Downstream Performance Retention')
+    axes3[1].set_title('Noise Sensitivity: Classification Performance')
+    axes3[1].legend()
+    axes3[1].grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig('noise_sensitivity_analysis.png', dpi=300, bbox_inches='tight')
+    print("✓ Noise sensitivity analysis saved as 'noise_sensitivity_analysis.png'")
+    
+    # Parameter sensitivity analysis
+    print("\n🔬 Parameter Sensitivity Analysis (on nonlinear_moons dataset)...")
+    test_dataset2 = datasets['nonlinear_moons']
+    X_test2, y_test2 = test_dataset2[0], test_dataset2[1]
+    scaler = StandardScaler()
+    X_test2_scaled = scaler.fit_transform(X_test2)
+    
+    param_results = {}
+    for method in ['t-SNE'] + (['UMAP'] if UMAP_AVAILABLE else []):
+        print(f"   Analyzing {method} parameter sensitivity...")
+        results, param_name, param_values = parameter_sensitivity_heatmap(X_test2_scaled, y_test2, method)
+        if results:
+            param_results[method] = (results, param_name, param_values)
+    
+    # Visualize parameter sensitivity
+    if param_results:
+        n_methods = len(param_results)
+        fig4, axes4 = plt.subplots(1, n_methods, figsize=(6*n_methods, 4))
+        if n_methods == 1:
+            axes4 = [axes4]
+        
+        for idx, (method, (results, param_name, param_values)) in enumerate(param_results.items()):
+            param_vals = [r['param_value'] for r in results]
+            trust_vals = [r['trustworthiness'] for r in results]
+            separability_vals = [r['cluster_separability'] for r in results]
+            
+            ax = axes4[idx]
+            ax2 = ax.twinx()
+            line1 = ax.plot(param_vals, trust_vals, 'b-o', label='Trustworthiness', linewidth=2)
+            line2 = ax2.plot(param_vals, separability_vals, 'r-s', label='Cluster Separability', linewidth=2)
+            
+            ax.set_xlabel(f'{param_name.capitalize()}')
+            ax.set_ylabel('Trustworthiness', color='b')
+            ax2.set_ylabel('Cluster Separability', color='r')
+            ax.set_title(f'{method} Parameter Sensitivity')
+            ax.tick_params(axis='y', labelcolor='b')
+            ax2.tick_params(axis='y', labelcolor='r')
+            ax.grid(True, alpha=0.3)
+            
+            # Combined legend
+            lines = line1 + line2
+            labels = [l.get_label() for l in lines]
+            ax.legend(lines, labels, loc='best')
+        
+        plt.tight_layout()
+        plt.savefig('parameter_sensitivity_analysis.png', dpi=300, bbox_inches='tight')
+        print("✓ Parameter sensitivity analysis saved as 'parameter_sensitivity_analysis.png'")
     
     print("\n" + "=" * 70)
     print("KEY TAKEAWAYS")
@@ -607,7 +789,12 @@ def main():
     """)
     
     print("=" * 70)
-    print("Analysis complete! Check 'dimensionality_reduction_comparison.png' for visualizations.")
+    print("Analysis complete! Generated visualizations:")
+    print("  - dimensionality_reduction_comparison.png (main comparison)")
+    print("  - dimensionality_reduction_metrics_comparison.png (metrics)")
+    print("  - noise_sensitivity_analysis.png (noise degradation)")
+    if param_results:
+        print("  - parameter_sensitivity_analysis.png (parameter tuning)")
     print("=" * 70)
 
 if __name__ == "__main__":
