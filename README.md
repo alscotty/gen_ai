@@ -29,3 +29,9 @@ Gen AI Review & Practice
     - Generates multiple visualizations: main comparison plots, metrics charts, noise sensitivity curves, and parameter sensitivity plots
     - Provides actionable insights for real-world applications: when to use PCA (linear, fast, interpretable), t-SNE (visualization, local structure), or UMAP (non-linear with global structure balance)
     - Focuses on systematic comparisons and decision-making guidance rather than single-technique tutorials
+ - /model_evaluation - decision-focused study of model quality under drift and asymmetric costs
+    - /model_evaluation : evaluation workflow that trains on a base era and evaluates on multiple drifted eras (prevalence shift, feature + noise shift)
+    - Compares Logistic Regression vs a Calibrated Random Forest using a rich metric set (accuracy, precision, recall, F1, ROC AUC, PR AUC, Brier score)
+    - **Connects metrics to deployment decisions** via lightweight decision curve analysis with explicit misclassification cost ratios (false negatives more expensive than false positives)
+    - **Makes drift visible** by plotting how discrimination and calibration metrics move across eras, highlighting when a model is robust vs brittle to distribution shift
+    - Emphasizes a production mindset: choosing both model and threshold based on business costs and expected future data, not just a single held-out test split
