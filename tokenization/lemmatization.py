@@ -1,17 +1,36 @@
-# import nltk
-# nltk.download('wordnet')
-
+"""
+Lemmatization demo: WordNet lemmatizer with NLTK.
+Lemmatizer reduces words to a dictionary form (valid word); requires POS for best results.
+"""
+import nltk
 from nltk.stem import WordNetLemmatizer
 
-lemmatizer = WordNetLemmatizer()
+from common import WORDS
 
-from stemming import words
 
-for word in words:
-    print(f"{word} -> {lemmatizer.lemmatize(word, pos="v")}")
+def ensure_resources() -> None:
+    """Download WordNet (and OMW) if needed (run once)."""
+    nltk.download("wordnet", quiet=True)
+    nltk.download("omw-1.4", quiet=True)
 
-# pos can be "n" for noun, "v" for verb, "a" for adjective, "r" for adverb
-# default is "n"
-# can also provide a part of speech tag, e.g. "v" for verb, "n" for noun, "a" for adjective, "r" for adverb
-# can also provide a list of part of speech tags, e.g. ["v", "n", "a", "r"]
-# can also provide a function that returns a part of speech tag, e.g. lambda word: "v" if word.endswith("ing") else "n"
+
+def run_demo(word_list: list[str] | None = None) -> None:
+    ensure_resources()
+    words = word_list or WORDS
+    lemmatizer = WordNetLemmatizer()
+
+    print("Lemmatize as verb (pos='v'):")
+    for w in words:
+        print(f"  {w} -> {lemmatizer.lemmatize(w, pos='v')}")
+
+    print("\nLemmatize as noun (pos='n', default):")
+    for w in words:
+        print(f"  {w} -> {lemmatizer.lemmatize(w, pos='n')}")
+
+    # POS: n=noun, v=verb, a=adjective, r=adverb
+    print("\nExample with explicit POS: better (adj) -> good:")
+    print(f"  better -> {lemmatizer.lemmatize('better', pos='a')}")
+
+
+if __name__ == "__main__":
+    run_demo()
