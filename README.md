@@ -29,6 +29,11 @@ Gen AI Review & Practice
     - Generates multiple visualizations: main comparison plots, metrics charts, noise sensitivity curves, and parameter sensitivity plots
     - Provides actionable insights for real-world applications: when to use PCA (linear, fast, interpretable), t-SNE (visualization, local structure), or UMAP (non-linear with global structure balance)
     - Focuses on systematic comparisons and decision-making guidance rather than single-technique tutorials
+ - /active_learning - label-efficiency–focused active learning study
+    - /active_learning_simulation : compares multiple query strategies (random, least-confidence, margin, and diversity-aware uncertainty) on a synthetic dataset with informative, redundant, and spurious features
+    - Emphasizes **label efficiency** rather than just final accuracy, computing area under the learning curve (AULC) and the number of labels needed to reach a target fraction of fully supervised performance
+    - Uses a simple k-center–style step to make uncertainty sampling diversity-aware, preventing the model from repeatedly querying near-duplicate points
+    - Focuses on reasoning about **when active learning actually saves labels** vs when random sampling is already competitive
  - /model_evaluation - decision-focused study of model quality under drift and asymmetric costs
     - /model_evaluation : evaluation workflow that trains on a base era and evaluates on multiple drifted eras (prevalence shift, feature + noise shift)
     - Compares Logistic Regression vs a Calibrated Random Forest using a rich metric set (accuracy, precision, recall, F1, ROC AUC, PR AUC, Brier score)
