@@ -45,3 +45,8 @@ Gen AI Review & Practice
     - Introduces **learning-efficiency metrics** such as area under the validation accuracy curve (AULC) and *time-to-competence* (epochs to reach a target validation accuracy)
     - Visualizes **generalization gap trajectories** (train–validation accuracy difference) and a **time-to-competence heatmap** across optimizers and learning rates
     - Emphasizes reasoning about **speed vs stability vs final performance** when choosing optimization settings, rather than picking a single “best” optimizer
+- /selective_prediction - abstention-focused study of selective prediction under distribution shift
+    - /selective_prediction : compares multiple confidence policies (max-probability, margin, and negative-entropy) using risk-coverage frontiers
+    - Chooses thresholds by **deployment utility** (accuracy-coverage trade-off with abstention cost) rather than one-shot accuracy
+    - Tests **threshold transfer robustness** across drifted eras (clean, feature-shift, prevalence+noise shift)
+    - Introduces **Coverage Stability Index**, **Threshold Transfer Regret**, and **Coverage Shock Index** to quantify fixed-threshold reliability and failure modes under shift
