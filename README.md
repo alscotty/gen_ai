@@ -50,3 +50,8 @@ Gen AI Review & Practice
     - Chooses thresholds by **deployment utility** (accuracy-coverage trade-off with abstention cost) rather than one-shot accuracy
     - Tests **threshold transfer robustness** across drifted eras (clean, feature-shift, prevalence+noise shift)
     - Introduces **Coverage Stability Index**, **Threshold Transfer Regret**, and **Coverage Shock Index** to quantify fixed-threshold reliability and failure modes under shift
+- /shortcut_robustness - tabular study of shortcut learning and spurious correlations when a cheap cue breaks at deployment time
+    - /shortcut_robustness : synthetic binary classification with an appended shortcut feature that is strongly aligned with the label on train / ID test but **ruptured** OOD (e.g. \(P(s=y)\) drops to chance)
+    - Contrasts **ERM** vs **inverse-frequency–weighted** logistic regression (over `(y, shortcut)` cells) vs an **oracle** trained without the shortcut; reports **shortcut L2 share**, **shortcut-to-core tilt**, and comparison to an **LDA** reference on the same scaled features
+    - Surfaces **worst (y, shortcut) subgroup** accuracy on OOD, a **spurious rupture curve** (accuracy vs test-time shortcut fidelity), **mitigation lift** toward oracle OOD performance, and a **regularization path** for how \(C\) moves weight off the shortcut
+    - Focuses on interpretable linear attribution and operational failure modes (high ID accuracy masking OOD collapse), not CNN vision benchmarks
